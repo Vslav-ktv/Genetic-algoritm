@@ -3,8 +3,7 @@ import math
 import numpy as np
 from PIL import Image
 from deap import creator, base, tools
-from vo import Data
-
+from vo import Data, Results
 
 POPULATION_SIZE = 10000
 MAX_GENERATIONS = 1000
@@ -46,10 +45,10 @@ def fitness_function(individual, data):
     return fitness,
 
 
-def run():
-    data = load_data("images/map.png", "images/toFind.png")
+def run_search(haystack_path, needle_path, show_function):
+    data = load_data(haystack_path, needle_path)
     toolbox = init_toolbox(data)
-    search(toolbox)
+    search(data, toolbox, show_function)
     pass
 
 
@@ -77,17 +76,19 @@ def init_toolbox(data):
     return toolbox
 
 
-def search(toolbox):
-    minFitnessValues = []
-    meanFitnessValues = []
+def search(data, toolbox, show_function):
     generationCounter = -1
+    results = Results(finished=False, minFitnessValues=[], meanFitnessValues=[],
+                      generationIndex=generationCounter, population=None, bestIndex=0)
     while generationCounter < MAX_GENERATIONS:
         generationCounter += 1
-        population = next_generation(population, toolbox) if generationCounter != 0 \
+        results.generationIndex = generationCounter
+        results.population = next_generation(results.population, toolbox) if generationCounter != 0 \
             else first_generation(toolbox)
-        append_statistics(meanFitnessValues, minFitnessValues, population)
-        report_generation(generationCounter, meanFitnessValues, minFitnessValues, population)
-    report_total(minFitnessValues)
+        update_results(results)
+        report_generation(data, results, show_function)
+    results.finished = True
+    report_total(data, results, show_function)
 
 
 def first_generation(toolbox):
@@ -135,40 +136,30 @@ def evaluate_changed(offspring, toolbox):
         individual.fitness.values = fitnessValue
 
 
-def append_statistics(meanFitnessValues, minFitnessValues, population):
-    fitnessValues = [ind.fitness.values[0] for ind in population]
+def update_results(results):
+    fitnessValues = [ind.fitness.values[0] for ind in results.population]
     minFitness = min(fitnessValues)
-    meanFitness = math.sqrt(sum([i ** 2 for i in fitnessValues]) / len(population))
-    minFitnessValues.append(minFitness)
-    meanFitnessValues.append(meanFitness)
+    meanFitness = math.sqrt(sum([i ** 2 for i in fitnessValues]) / len(results.population))
+    results.minFitnessValues.append(minFitness)
+    results.meanFitnessValues.append(meanFitness)
+    results.best_index = fitnessValues.index(minFitness)
 
 
-def report_generation(generationCounter, meanFitnessValues, minFitnessValues, population):
+def report_generation(data, results, show_function):
     print("Generation {}: Total {}, Min={}, Mean={}"
-          .format(generationCounter, len(population), minFitnessValues[-1], meanFitnessValues[-1]))
-    # best_index = fitnessValues.index(minFitnessValues[-1])
-    #best_ind = population[best_index]
-    #fwk.cr(best_ind[0][0], best_ind[0][1], "best")
-    #for i in population:
-    #    fwk.cr(i[0][0], i[0][1])
-    #fwk.update()
-    #fwk.delete_all_figures()
+          .format(results.generationIndex, len(results.population),
+                  results.minFitnessValues[-1], results.meanFitnessValues[-1]))
+    show_function(data, results)
 
-def report_total(minFitnessValues):
-    print("Completed. Min={}"
-          .format(min(minFitnessValues)))
-    # fwk.delete_all_figures("best")
-    # best_index = fitnessValues.index(min(fitnessValues))
-    # best_ind = population[best_index]
-    # fwk.cr(best_ind[0][0], best_ind[0][1], "best")
-    # plt.plot(minFitnessValues, color='red')
-    # plt.plot(meanFitnessValues, color='green')
-    # plt.xlabel("Поколение")
-    # plt.ylabel('Мин/средняя приспособленность')
-    # plt.title('Зависимость минимальной и средней приспособленности от поколения')
-    # plt.show()
-    pass
+
+def report_total(data, results, show_function):
+    print("Completed. Min={}".format(min(results.minFitnessValues)))
+    show_function(data, results)
 
 
 if __name__ == '__main__':
-    run()
+    run_search("images/map.png", "images/toFind.png", lambda data, results:
+               print("Generation {}: Total {}, Min={}, Mean={}"
+                     .format(results.generationIndex, len(results.population),
+                             results.minFitnessValues[-1], results.meanFitnessValues[-1]
+                             )))
