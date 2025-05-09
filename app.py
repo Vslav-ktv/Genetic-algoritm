@@ -1,10 +1,13 @@
 import tkinter as tk
 from tkinter import filedialog
 from PIL import ImageTk
+from matplotlib import pyplot as plt
+
 from search import *
 
 TAG_INDIVIDUAL = "individual"
 TAG_BEST = "best"
+
 
 class App:
     def __init__(self):
@@ -60,12 +63,13 @@ class App:
 
     def show(self, data, results):
         if results.finished:
-            # fwk.delete_all_figures("best")
-            # best_index = fitnessValues.index(min(fitnessValues))
-            # best_ind = population[best_index]
-            # fwk.cr(best_ind[0][0], best_ind[0][1], "best")
-            # plt.plot(minFitnessValues, color='red')
-            # plt.plot(meanFitnessValues, color='green')
+            # best_index = results.minFitnessValues.index(min(results.minFitnessValues))
+            # best_ind = results.population[best_index]
+            # x, y = best_ind[0][0], best_ind[0][1]
+            # self.canvas.create_rectangle(x, y, x + data.n_width, y + data.n_height,
+            #                              fill='', outline="purple", tags=TAG_BEST)
+            # plt.plot(results.minFitnessValues, color='red')
+            # plt.plot(results.meanFitnessValues, color='green')
             # plt.xlabel("Поколение")
             # plt.ylabel('Мин/средняя приспособленность')
             # plt.title('Зависимость минимальной и средней приспособленности от поколения')
@@ -74,16 +78,16 @@ class App:
         else:
             self.canvas.delete(TAG_INDIVIDUAL)
             self.canvas.delete(TAG_BEST)
+            # for i in range(2): #len(results.population)
+            #     x = results.population[i][0][0]
+            #     y = results.population[i][0][1]
+            #     self.canvas.create_rectangle(x, y, x + data.n_width, y + data.n_height,
+            #                                  fill='', outline="blue", tags=TAG_INDIVIDUAL)
             best = results.population[results.best_index]
             x = best[0][0]
             y = best[0][1]
             self.canvas.create_rectangle(x, y, x + data.n_width, y + data.n_height,
-                                         fill='', outline="green", tags=TAG_INDIVIDUAL)
-            for i in results.population:
-                x = i[0][0]
-                y = i[0][1]
-                self.canvas.create_rectangle(x, y, x + data.n_width, y + data.n_height,
-                                             fill='', outline="blue", tags=TAG_INDIVIDUAL)
+                                         fill='', outline="green", tags=TAG_BEST)
             self.root.update()
 
 

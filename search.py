@@ -5,15 +5,44 @@ from PIL import Image
 from deap import creator, base, tools
 from vo import Data, Results
 
-POPULATION_SIZE = 10000
+INDIVIDUALS_TO_SELECT = 300
+POPULATION_SIZE = 1000
 MAX_GENERATIONS = 1000
 P_CROSSOVER = 0.9
 P_MUTATION = 0.1
 
 
 def crossover_function(ind1, ind2):
-    ind1[0][0], ind2[0][1] = ind2[0][0], ind1[0][1]
-    return
+    mean_arifm_x = (ind1[0][0] + ind2[0][0]) // 2
+    mean_arifm_y = (ind1[0][1] + ind2[0][1]) // 2
+    mean_sqrt_x = math.sqrt((ind1[0][0] ** 2 + ind2[0][0] ** 2) // 2)
+    mean_sqrt_y = math.sqrt((ind1[0][1] ** 2 + ind2[0][1] ** 2) // 2)
+    swaped_1_x = ind1[0][0]
+    swaped_1_y = ind2[0][1]
+    swaped_2_x = ind2[0][0]
+    swaped_2_y = ind1[0][1]
+    operations = random.randint(1, 6)
+    if operations == 1:
+        ind_1n_x, ind_1n_y = mean_arifm_x, mean_arifm_y
+        ind_2n_x, ind_2n_y = mean_sqrt_x, mean_sqrt_y
+    elif operations == 2:
+        ind_1n_x, ind_1n_y = mean_arifm_x, mean_arifm_y
+        ind_2n_x, ind_2n_y = swaped_1_x, swaped_1_y
+    elif operations == 3:
+        ind_1n_x, ind_1n_y = mean_arifm_x, mean_arifm_y
+        ind_2n_x, ind_2n_y = swaped_2_x, swaped_2_y
+    elif operations == 4:
+        ind_1n_x, ind_1n_y = mean_sqrt_x, mean_sqrt_y
+        ind_2n_x, ind_2n_y = swaped_1_x, swaped_1_y
+    elif operations == 5:
+        ind_1n_x, ind_1n_y = mean_sqrt_x, mean_sqrt_y
+        ind_2n_x, ind_2n_y = swaped_2_x, swaped_2_y
+    elif operations == 6:
+        ind_1n_x, ind_1n_y = swaped_1_x, swaped_1_y
+        ind_2n_x, ind_2n_y = swaped_2_x, swaped_2_y
+    ind1[0][0], ind1[0][1] = ind_1n_x, ind_1n_y
+    ind2[0][0], ind2[0][1] = ind_2n_x, ind_2n_y
+    return ind1, ind2
 
 
 def mutation_function(individual, indpb, data):
@@ -22,10 +51,24 @@ def mutation_function(individual, indpb, data):
         :param indpb: Independent probability for each attribute to be mutated.
         :returns: A tuple of one individual.
     """
-    for i in range(len(individual)):
-        if random.randint(0, 100) < indpb:
-            individual[0][0] = random.randint(0, data.h_width - data.n_width)
-            individual[0][1] = random.randint(0, data.h_height - data.n_height)
+    ind_x, ind_y = individual[0][0], individual[0][1]
+    if random.randint(0, 100) < indpb:
+        offset_x = random.randint(10, math.floor(data.n_width * 0.1))
+        ind_right = individual[0][0] + offset_x
+        if ind_right < data.h_width:
+            ind_x = ind_right
+        else:
+            ind_left = individual[0][0] - offset_x
+            ind_x = ind_left
+    if random.randint(0, 100) < indpb:
+        offset_y = random.randint(10, math.floor(data.n_width * 0.1))
+        ind_up = individual[0][1] + offset_y
+        if ind_up < data.h_width:
+            ind_y = ind_up
+        else:
+            ind_down = individual[0][1] - offset_y
+            ind_y = ind_down
+    individual[0][0], individual[0][1] = ind_x, ind_y
     return individual,
 
 
@@ -49,7 +92,6 @@ def run_search(haystack_path, needle_path, show_function):
     data = load_data(haystack_path, needle_path)
     toolbox = init_toolbox(data)
     search(data, toolbox, show_function)
-    pass
 
 
 def load_data(haystack_path, needle_path):
@@ -66,7 +108,7 @@ def init_toolbox(data):
     creator.create('FitnessMin', base.Fitness, weights=(-1.0,))
     creator.create('Individual', list, fitness=creator.FitnessMin)
     toolbox = base.Toolbox()
-    toolbox.register('select', tools.selLexicase, k=10)
+    toolbox.register('select', tools.selLexicase, k=INDIVIDUALS_TO_SELECT)
     toolbox.register('mate', crossover_function)
     toolbox.register('mutate', mutation_function, indpb=90, data=data)
     toolbox.register("individualCreator", tools.initRepeat, creator.Individual,
@@ -83,7 +125,7 @@ def search(data, toolbox, show_function):
     while generationCounter < MAX_GENERATIONS:
         generationCounter += 1
         results.generationIndex = generationCounter
-        results.population = next_generation(results.population, toolbox) if generationCounter != 0 \
+        results.population = next_generation(results.population, toolbox, data) if generationCounter != 0 \
             else first_generation(toolbox)
         update_results(results)
         report_generation(data, results, show_function)
@@ -99,12 +141,12 @@ def first_generation(toolbox):
     return population
 
 
-def next_generation(population, toolbox):
+def next_generation(population, toolbox, data):
     offspring = select_best(population, toolbox)
     crossover(offspring, toolbox)
     mutate(offspring, toolbox)
     evaluate_changed(offspring, toolbox)
-    population[:] = offspring
+    population[:] = offspring # + [create_individual(data) for _ in range(POPULATION_SIZE - INDIVIDUALS_TO_SELECT)]
     return population
 
 
