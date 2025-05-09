@@ -3,20 +3,13 @@ import math
 import numpy as np
 from PIL import Image
 from deap import creator, base, tools
+from vo import Data
+
 
 POPULATION_SIZE = 10000
 MAX_GENERATIONS = 1000
 P_CROSSOVER = 0.9
 P_MUTATION = 0.1
-
-haystack_path = "images/map.png"
-needle_path = "images/toFind.png"
-with Image.open(haystack_path) as haystack:
-    haystack.load()
-WIDTH, HEIGHT = haystack.size
-with Image.open(needle_path) as needle:
-    needle.load()
-width, height = needle.size
 
 
 def crossover_function(ind1, ind2):
@@ -24,7 +17,7 @@ def crossover_function(ind1, ind2):
     return
 
 
-def mutation_function(individual, indpb):
+def mutation_function(individual, indpb, data):
     """This function applies mutation on the input individual.
         :param individual: Individual to be mutated.
         :param indpb: Independent probability for each attribute to be mutated.
@@ -32,13 +25,13 @@ def mutation_function(individual, indpb):
     """
     for i in range(len(individual)):
         if random.randint(0, 100) < indpb:
-            individual[0][0] = random.randint(0, WIDTH - width)
-            individual[0][1] = random.randint(0, HEIGHT - height)
+            individual[0][0] = random.randint(0, data.h_width - data.n_width)
+            individual[0][1] = random.randint(0, data.h_height - data.n_height)
     return individual,
 
 
-def create_individual():
-    return [random.randint(0, WIDTH - width), random.randint(0, HEIGHT - height)]
+def create_individual(data):
+    return [random.randint(0, data.h_width - data.n_width), random.randint(0, data.h_height - data.n_height)]
 
 
 def get_coordinates(individual, width, height):
@@ -46,29 +39,41 @@ def get_coordinates(individual, width, height):
             individual[0][0] + width, individual[0][1] + height)
 
 
-def fitness_function(individual):
-    img = haystack.crop(get_coordinates(individual, width, height))
-    diff = np.abs(np.array(needle) - np.array(img))
+def fitness_function(individual, data):
+    img = data.haystack.crop(get_coordinates(individual, data.n_width, data.n_height))
+    diff = np.abs(np.array(data.needle) - np.array(img))
     fitness = int(np.sum(diff))
     return fitness,
 
 
 def run():
-    toolbox = init_toolbox()
+    data = load_data("images/map.png", "images/toFind.png")
+    toolbox = init_toolbox(data)
     search(toolbox)
     pass
 
 
-def init_toolbox():
+def load_data(haystack_path, needle_path):
+    with Image.open(haystack_path) as haystack:
+        haystack.load()
+    hw, hh = haystack.size
+    with Image.open(needle_path) as needle:
+        needle.load()
+    nw, nh = needle.size
+    return Data(haystack, hw, hh, needle, nw, nh)
+
+
+def init_toolbox(data):
     creator.create('FitnessMin', base.Fitness, weights=(-1.0,))
     creator.create('Individual', list, fitness=creator.FitnessMin)
     toolbox = base.Toolbox()
     toolbox.register('select', tools.selLexicase, k=10)
     toolbox.register('mate', crossover_function)
-    toolbox.register('mutate', mutation_function, indpb=90)
-    toolbox.register("individualCreator", tools.initRepeat, creator.Individual, create_individual, 1)
+    toolbox.register('mutate', mutation_function, indpb=90, data=data)
+    toolbox.register("individualCreator", tools.initRepeat, creator.Individual,
+                     lambda: create_individual(data), 1)
     toolbox.register("populationCreator", tools.initRepeat, list, toolbox.individualCreator)
-    toolbox.register("evaluate", fitness_function)
+    toolbox.register("evaluate", fitness_function, data=data)
     return toolbox
 
 
