@@ -145,8 +145,9 @@ def next_generation(population, toolbox, data):
     offspring = select_best(population, toolbox)
     crossover(offspring, toolbox)
     mutate(offspring, toolbox)
+    offspring = offspring + toolbox.populationCreator(n=POPULATION_SIZE - INDIVIDUALS_TO_SELECT)
     evaluate_changed(offspring, toolbox)
-    population[:] = offspring # + [create_individual(data) for _ in range(POPULATION_SIZE - INDIVIDUALS_TO_SELECT)]
+    population[:] = offspring
     return population
 
 
