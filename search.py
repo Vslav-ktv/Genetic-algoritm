@@ -5,11 +5,13 @@ from PIL import Image
 from deap import creator, base, tools
 from vo import Data, Results
 
-INDIVIDUALS_TO_SELECT = 300
-POPULATION_SIZE = 1000
-MAX_GENERATIONS = 1000
-P_CROSSOVER = 0.9
-P_MUTATION = 0.1
+
+INDIVIDUALS_TO_SELECT = 0
+POPULATION_SIZE = 0
+MAX_GENERATIONS = 0
+P_CROSSOVER = 0
+P_MUTATION = 0
+MUTATION = 0
 
 
 def crossover_function(ind1, ind2):
@@ -30,7 +32,7 @@ def mutation_function(individual, indpb, data):
     """
     ind_x, ind_y = individual[0][0], individual[0][1]
     if random.random() < indpb:
-        offset_x = random.randint(10, math.floor(data.n_width * 0.1))
+        offset_x = random.randint(10, math.floor(data.n_width * MUTATION))
         ind_right = individual[0][0] + offset_x
         if ind_right < data.h_width:
             ind_x = ind_right
@@ -38,7 +40,7 @@ def mutation_function(individual, indpb, data):
             ind_left = individual[0][0] - offset_x
             ind_x = ind_left
     if random.random() < indpb:
-        offset_y = random.randint(10, math.floor(data.n_width * 0.1))
+        offset_y = random.randint(10, math.floor(data.n_width * MUTATION))
         ind_up = individual[0][1] + offset_y
         if ind_up < data.h_width:
             ind_y = ind_up
@@ -66,9 +68,32 @@ def fitness_function(individual, data):
 
 
 def run_search(haystack_path, needle_path, show_function):
+    init_global_variables()
     data = load_data(haystack_path, needle_path)
     toolbox = init_toolbox(data)
     search(data, toolbox, show_function)
+
+
+def init_global_variables(
+        indtosel=30,
+        popsize=100,
+        maxgen=1000,
+        pcros=0.9,
+        pmut=0.1,
+        mut=0.1
+        ):
+    global INDIVIDUALS_TO_SELECT
+    global POPULATION_SIZE
+    global MAX_GENERATIONS
+    global P_CROSSOVER
+    global P_MUTATION
+    global MUTATION
+    INDIVIDUALS_TO_SELECT = indtosel
+    POPULATION_SIZE = popsize
+    MAX_GENERATIONS = maxgen
+    P_CROSSOVER = pcros
+    P_MUTATION = pmut
+    MUTATION = mut
 
 
 def load_data(haystack_path, needle_path):
