@@ -17,31 +17,8 @@ def crossover_function(ind1, ind2):
     mean_arifm_y = (ind1[0][1] + ind2[0][1]) // 2
     mean_sqrt_x = math.sqrt((ind1[0][0] ** 2 + ind2[0][0] ** 2) // 2)
     mean_sqrt_y = math.sqrt((ind1[0][1] ** 2 + ind2[0][1] ** 2) // 2)
-    swaped_1_x = ind1[0][0]
-    swaped_1_y = ind2[0][1]
-    swaped_2_x = ind2[0][0]
-    swaped_2_y = ind1[0][1]
-    operations = random.randint(1, 6)
-    if operations == 1:
-        ind_1n_x, ind_1n_y = mean_arifm_x, mean_arifm_y
-        ind_2n_x, ind_2n_y = mean_sqrt_x, mean_sqrt_y
-    elif operations == 2:
-        ind_1n_x, ind_1n_y = mean_arifm_x, mean_arifm_y
-        ind_2n_x, ind_2n_y = swaped_1_x, swaped_1_y
-    elif operations == 3:
-        ind_1n_x, ind_1n_y = mean_arifm_x, mean_arifm_y
-        ind_2n_x, ind_2n_y = swaped_2_x, swaped_2_y
-    elif operations == 4:
-        ind_1n_x, ind_1n_y = mean_sqrt_x, mean_sqrt_y
-        ind_2n_x, ind_2n_y = swaped_1_x, swaped_1_y
-    elif operations == 5:
-        ind_1n_x, ind_1n_y = mean_sqrt_x, mean_sqrt_y
-        ind_2n_x, ind_2n_y = swaped_2_x, swaped_2_y
-    elif operations == 6:
-        ind_1n_x, ind_1n_y = swaped_1_x, swaped_1_y
-        ind_2n_x, ind_2n_y = swaped_2_x, swaped_2_y
-    ind1[0][0], ind1[0][1] = ind_1n_x, ind_1n_y
-    ind2[0][0], ind2[0][1] = ind_2n_x, ind_2n_y
+    ind1[0][0], ind1[0][1] = mean_arifm_x, mean_arifm_y
+    ind2[0][0], ind2[0][1] = mean_sqrt_x, mean_sqrt_y
     return ind1, ind2
 
 
@@ -52,7 +29,7 @@ def mutation_function(individual, indpb, data):
         :returns: A tuple of one individual.
     """
     ind_x, ind_y = individual[0][0], individual[0][1]
-    if random.randint(0, 100) < indpb:
+    if random.random() < indpb:
         offset_x = random.randint(10, math.floor(data.n_width * 0.1))
         ind_right = individual[0][0] + offset_x
         if ind_right < data.h_width:
@@ -60,7 +37,7 @@ def mutation_function(individual, indpb, data):
         else:
             ind_left = individual[0][0] - offset_x
             ind_x = ind_left
-    if random.randint(0, 100) < indpb:
+    if random.random() < indpb:
         offset_y = random.randint(10, math.floor(data.n_width * 0.1))
         ind_up = individual[0][1] + offset_y
         if ind_up < data.h_width:
@@ -110,7 +87,7 @@ def init_toolbox(data):
     toolbox = base.Toolbox()
     toolbox.register('select', tools.selLexicase, k=INDIVIDUALS_TO_SELECT)
     toolbox.register('mate', crossover_function)
-    toolbox.register('mutate', mutation_function, indpb=90, data=data)
+    toolbox.register('mutate', mutation_function, indpb=0.9, data=data)
     toolbox.register("individualCreator", tools.initRepeat, creator.Individual,
                      lambda: create_individual(data), 1)
     toolbox.register("populationCreator", tools.initRepeat, list, toolbox.individualCreator)
