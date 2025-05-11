@@ -1,99 +1,19 @@
 import random
 import math
-import numpy as np
 from PIL import Image
 from deap import creator, base, tools
-from vo import Data, Results
+from genetic import crossover_function, mutation_function, create_individual, fitness_function
+from vo import Data, Results, Parameters
 
 
-INDIVIDUALS_TO_SELECT = 0
-POPULATION_SIZE = 0
-MAX_GENERATIONS = 0
-P_CROSSOVER = 0
-P_MUTATION = 0
-MUTATION = 0
-
-
-def crossover_function(ind1, ind2):
-    mean_arifm_x = (ind1[0][0] + ind2[0][0]) // 2
-    mean_arifm_y = (ind1[0][1] + ind2[0][1]) // 2
-    mean_sqrt_x = math.sqrt((ind1[0][0] ** 2 + ind2[0][0] ** 2) // 2)
-    mean_sqrt_y = math.sqrt((ind1[0][1] ** 2 + ind2[0][1] ** 2) // 2)
-    ind1[0][0], ind1[0][1] = mean_arifm_x, mean_arifm_y
-    ind2[0][0], ind2[0][1] = mean_sqrt_x, mean_sqrt_y
-    return ind1, ind2
-
-
-def mutation_function(individual, indpb, data):
-    """This function applies mutation on the input individual.
-        :param individual: Individual to be mutated.
-        :param indpb: Independent probability for each attribute to be mutated.
-        :returns: A tuple of one individual.
-    """
-    ind_x, ind_y = individual[0][0], individual[0][1]
-    if random.random() < indpb:
-        offset_x = random.randint(10, math.floor(data.n_width * MUTATION))
-        ind_right = individual[0][0] + offset_x
-        if ind_right < data.h_width:
-            ind_x = ind_right
-        else:
-            ind_left = individual[0][0] - offset_x
-            ind_x = ind_left
-    if random.random() < indpb:
-        offset_y = random.randint(10, math.floor(data.n_width * MUTATION))
-        ind_up = individual[0][1] + offset_y
-        if ind_up < data.h_width:
-            ind_y = ind_up
-        else:
-            ind_down = individual[0][1] - offset_y
-            ind_y = ind_down
-    individual[0][0], individual[0][1] = ind_x, ind_y
-    return individual,
-
-
-def create_individual(data):
-    return [random.randint(0, data.h_width - data.n_width), random.randint(0, data.h_height - data.n_height)]
-
-
-def get_coordinates(individual, width, height):
-    return (individual[0][0], individual[0][1],
-            individual[0][0] + width, individual[0][1] + height)
-
-
-def fitness_function(individual, data):
-    img = data.haystack.crop(get_coordinates(individual, data.n_width, data.n_height))
-    diff = np.abs(np.array(data.needle) - np.array(img))
-    fitness = int(np.sum(diff))
-    return fitness,
-
-
-def run_search(haystack_path, needle_path, show_function):
-    init_global_variables()
+def run_search(
+        haystack_path,
+        needle_path,
+        show_function,
+        parameters=Parameters(30, 100, 1000, 0.9, 0.8, 0.1)):
     data = load_data(haystack_path, needle_path)
-    toolbox = init_toolbox(data)
-    search(data, toolbox, show_function)
-
-
-def init_global_variables(
-        indtosel=30,
-        popsize=100,
-        maxgen=1000,
-        pcros=0.9,
-        pmut=0.1,
-        mut=0.1
-        ):
-    global INDIVIDUALS_TO_SELECT
-    global POPULATION_SIZE
-    global MAX_GENERATIONS
-    global P_CROSSOVER
-    global P_MUTATION
-    global MUTATION
-    INDIVIDUALS_TO_SELECT = indtosel
-    POPULATION_SIZE = popsize
-    MAX_GENERATIONS = maxgen
-    P_CROSSOVER = pcros
-    P_MUTATION = pmut
-    MUTATION = mut
+    toolbox = init_toolbox(data, parameters)
+    search(data, toolbox, show_function, parameters)
 
 
 def load_data(haystack_path, needle_path):
@@ -106,13 +26,13 @@ def load_data(haystack_path, needle_path):
     return Data(haystack, hw, hh, needle, nw, nh)
 
 
-def init_toolbox(data):
+def init_toolbox(data, parameters):
     creator.create('FitnessMin', base.Fitness, weights=(-1.0,))
     creator.create('Individual', list, fitness=creator.FitnessMin)
     toolbox = base.Toolbox()
-    toolbox.register('select', tools.selLexicase, k=INDIVIDUALS_TO_SELECT)
+    toolbox.register('select', tools.selLexicase, k=parameters.individuals_to_select)
     toolbox.register('mate', crossover_function)
-    toolbox.register('mutate', mutation_function, indpb=0.9, data=data)
+    toolbox.register('mutate', mutation_function, indpb=parameters.P_MUTATION, data=data, parametrs=parameters)
     toolbox.register("individualCreator", tools.initRepeat, creator.Individual,
                      lambda: create_individual(data), 1)
     toolbox.register("populationCreator", tools.initRepeat, list, toolbox.individualCreator)
@@ -120,34 +40,34 @@ def init_toolbox(data):
     return toolbox
 
 
-def search(data, toolbox, show_function):
+def search(data, toolbox, show_function, parameters):
     generationCounter = -1
     results = Results(finished=False, minFitnessValues=[], meanFitnessValues=[],
-                      generationIndex=generationCounter, population=None, bestIndex=0)
-    while generationCounter < MAX_GENERATIONS:
+                      generationIndex=generationCounter, population=[], bestIndex=0)
+    while generationCounter < parameters.MAX_GENERATIONS:
         generationCounter += 1
         results.generationIndex = generationCounter
-        results.population = next_generation(results.population, toolbox, data) if generationCounter != 0 \
-            else first_generation(toolbox)
+        results.population = next_generation(results.population, toolbox, parameters) if generationCounter != 0 \
+            else first_generation(toolbox, parameters)
         update_results(results)
         report_generation(data, results, show_function)
     results.finished = True
     report_total(data, results, show_function)
 
 
-def first_generation(toolbox):
-    population = toolbox.populationCreator(n=POPULATION_SIZE)
+def first_generation(toolbox, parameters):
+    population = toolbox.populationCreator(n=parameters.population_size)
     fitnessValues = list(map(toolbox.evaluate, population))
     for individual, fitnessValue in zip(population, fitnessValues):
         individual.fitness.values = fitnessValue
     return population
 
 
-def next_generation(population, toolbox, data):
+def next_generation(population, toolbox, parameters):
     offspring = select_best(population, toolbox)
-    crossover(offspring, toolbox)
-    mutate(offspring, toolbox)
-    offspring = offspring + toolbox.populationCreator(n=POPULATION_SIZE - INDIVIDUALS_TO_SELECT)
+    crossover(offspring, toolbox, parameters)
+    mutate(offspring, toolbox, parameters)
+    offspring = offspring + toolbox.populationCreator(n=parameters.population_size - parameters.individuals_to_select)
     evaluate_changed(offspring, toolbox)
     population[:] = offspring
     return population
@@ -159,17 +79,17 @@ def select_best(population, toolbox):
     return offspring
 
 
-def crossover(offspring, toolbox):
+def crossover(offspring, toolbox, parameters):
     for child1, child2 in zip(offspring[::2], offspring[1::2]):
-        if random.random() < P_CROSSOVER:
+        if random.random() < parameters.P_CROSSOVER:
             toolbox.mate(child1, child2)
             del child1.fitness.values
             del child2.fitness.values
 
 
-def mutate(offspring, toolbox):
+def mutate(offspring, toolbox, parameters):
     for mutant in offspring:
-        if random.random() < P_MUTATION:
+        if random.random() < parameters.P_MUTATION:
             toolbox.mutate(mutant)
             del mutant.fitness.values
 
@@ -187,7 +107,7 @@ def update_results(results):
     meanFitness = math.sqrt(sum([i ** 2 for i in fitnessValues]) / len(results.population))
     results.minFitnessValues.append(minFitness)
     results.meanFitnessValues.append(meanFitness)
-    results.best_index = fitnessValues.index(minFitness)
+    results.bestIndex = fitnessValues.index(minFitness)
 
 
 def report_generation(data, results, show_function):

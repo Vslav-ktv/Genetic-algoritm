@@ -23,3 +23,13 @@ class Results:
     generationIndex: int
     population: list
     bestIndex: int
+
+
+@dataclass
+class Parameters:
+    individuals_to_select: int
+    population_size: int
+    MAX_GENERATIONS: int
+    P_CROSSOVER: float
+    P_MUTATION: float
+    MUTATION: float

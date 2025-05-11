@@ -14,6 +14,12 @@ class App:
         self.root = None
         self.e_haystack = None
         self.e_needle = None
+        self.e_indtosel = None
+        self.e_popsize = None
+        self.e_maxgen = None
+        self.e_pcros = None
+        self.e_pmut = None
+        self.e_mut = None
         self.canvas = None
         self.haystack_width = None
         self.haystack_height = None
@@ -24,6 +30,7 @@ class App:
 
     def create_window(self):
         self.root = tk.Tk()
+        self.root.title("Genetic algoritm")
         self.e_haystack = tk.Entry(self.root, width=80)
         self.e_haystack.pack(padx=10, pady=10)
         bt_f1 = tk.Button(self.root, text="Choose haystack",
@@ -33,6 +40,23 @@ class App:
         self.e_needle.pack(padx=10, pady=20)
         bt_f2 = tk.Button(self.root, text="Choose needle",
                           command=lambda: self.choose_file(self.e_needle))
+        self.e_indtosel = tk.Entry(self.root, width=10)
+        self.e_indtosel.pack(padx=0, pady=0)
+
+        self.e_popsize = tk.Entry(self.root, width=10)
+        self.e_popsize.pack(padx=0, pady=0)
+
+        self.e_maxgen = tk.Entry(self.root, width=10)
+        self.e_maxgen.pack(padx=0, pady=0)
+
+        self.e_pcros = tk.Entry(self.root, width=10)
+        self.e_pcros.pack(padx=0, pady=0)
+
+        self.e_pmut = tk.Entry(self.root, width=10)
+        self.e_pmut.pack(padx=0, pady=0)
+
+        self.e_mut = tk.Entry(self.root, width=10)
+        self.e_mut.pack(padx=0, pady=0)
         bt_f2.pack(pady=20)
         bt_run = tk.Button(self.root, text="Run search", command=lambda: self.on_run_click())
         bt_run.pack(pady=30)
@@ -63,8 +87,8 @@ class App:
 
     def show(self, data, results):
         if results.finished:
-            # best_index = results.minFitnessValues.index(min(results.minFitnessValues))
-            # best_ind = results.population[best_index]
+            # bestIndex = results.minFitnessValues.index(min(results.minFitnessValues))
+            # best_ind = results.population[bestIndex]
             # x, y = best_ind[0][0], best_ind[0][1]
             # self.canvas.create_rectangle(x, y, x + data.n_width, y + data.n_height,
             #                              fill='', outline="purple", tags=TAG_BEST)
@@ -83,7 +107,7 @@ class App:
             #     y = results.population[i][0][1]
             #     self.canvas.create_rectangle(x, y, x + data.n_width, y + data.n_height,
             #                                  fill='', outline="blue", tags=TAG_INDIVIDUAL)
-            best = results.population[results.best_index]
+            best = results.population[results.bestIndex]
             x = best[0][0]
             y = best[0][1]
             self.canvas.create_rectangle(x, y, x + data.n_width, y + data.n_height,
