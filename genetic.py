@@ -21,7 +21,7 @@ def mutation_function(individual, indpb, data, parameters):
     """
     ind_x, ind_y = individual[0][0], individual[0][1]
     if random.random() < indpb:
-        offset_x = random.randint(1, math.floor(data.n_width * parameters.MUTATION))
+        offset_x = random.randint(1, math.floor(data.n_width * parameters.mutation))
         ind_right = individual[0][0] + offset_x
         if ind_right < data.h_width:
             ind_x = ind_right
@@ -29,7 +29,7 @@ def mutation_function(individual, indpb, data, parameters):
             ind_left = individual[0][0] - offset_x
             ind_x = ind_left
     if random.random() < indpb:
-        offset_y = random.randint(1, math.floor(data.n_width * parameters.MUTATION))
+        offset_y = random.randint(1, math.floor(data.n_width * parameters.mutation))
         ind_up = individual[0][1] + offset_y
         if ind_up < data.h_width:
             ind_y = ind_up

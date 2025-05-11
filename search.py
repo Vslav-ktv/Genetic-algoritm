@@ -1,16 +1,23 @@
 import random
 import math
+
 from PIL import Image
 from deap import creator, base, tools
 from genetic import crossover_function, mutation_function, create_individual, fitness_function
-from vo import Data, Results, Parameters
+from vo import *
+import default
 
 
 def run_search(
         haystack_path,
         needle_path,
         show_function,
-        parameters=Parameters(30, 100, 1000, 0.9, 0.8, 0.1)):
+        parameters=Parameters(default.indtosel,
+                              default.popsize,
+                              default.maxgen,
+                              default.pcros,
+                              default.pmut,
+                              default.mut)):
     data = load_data(haystack_path, needle_path)
     toolbox = init_toolbox(data, parameters)
     search(data, toolbox, show_function, parameters)
@@ -32,7 +39,7 @@ def init_toolbox(data, parameters):
     toolbox = base.Toolbox()
     toolbox.register('select', tools.selLexicase, k=parameters.individuals_to_select)
     toolbox.register('mate', crossover_function)
-    toolbox.register('mutate', mutation_function, indpb=parameters.P_MUTATION, data=data, parametrs=parameters)
+    toolbox.register('mutate', mutation_function, indpb=parameters.p_mutation, data=data, parameters=parameters)
     toolbox.register("individualCreator", tools.initRepeat, creator.Individual,
                      lambda: create_individual(data), 1)
     toolbox.register("populationCreator", tools.initRepeat, list, toolbox.individualCreator)
@@ -42,9 +49,9 @@ def init_toolbox(data, parameters):
 
 def search(data, toolbox, show_function, parameters):
     generationCounter = -1
-    results = Results(finished=False, minFitnessValues=[], meanFitnessValues=[],
-                      generationIndex=generationCounter, population=[], bestIndex=0)
-    while generationCounter < parameters.MAX_GENERATIONS:
+    results = Results(finished=False, minFitnessValues=[], meanFitnessValues=[], bestIndividuals=[],
+                      generationIndex=generationCounter, population=[])
+    while generationCounter < parameters.max_generations:
         generationCounter += 1
         results.generationIndex = generationCounter
         results.population = next_generation(results.population, toolbox, parameters) if generationCounter != 0 \
@@ -81,7 +88,7 @@ def select_best(population, toolbox):
 
 def crossover(offspring, toolbox, parameters):
     for child1, child2 in zip(offspring[::2], offspring[1::2]):
-        if random.random() < parameters.P_CROSSOVER:
+        if random.random() < parameters.p_crossover:
             toolbox.mate(child1, child2)
             del child1.fitness.values
             del child2.fitness.values
@@ -89,7 +96,7 @@ def crossover(offspring, toolbox, parameters):
 
 def mutate(offspring, toolbox, parameters):
     for mutant in offspring:
-        if random.random() < parameters.P_MUTATION:
+        if random.random() < parameters.p_mutation:
             toolbox.mutate(mutant)
             del mutant.fitness.values
 
@@ -107,7 +114,7 @@ def update_results(results):
     meanFitness = math.sqrt(sum([i ** 2 for i in fitnessValues]) / len(results.population))
     results.minFitnessValues.append(minFitness)
     results.meanFitnessValues.append(meanFitness)
-    results.bestIndex = fitnessValues.index(minFitness)
+    results.bestIndividuals.append(results.population[fitnessValues.index(minFitness)])
 
 
 def report_generation(data, results, show_function):

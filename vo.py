@@ -1,3 +1,4 @@
+import deap.base
 from PIL.ImageFile import ImageFile
 from dataclasses import dataclass
 
@@ -18,18 +19,17 @@ class Results:
     finished: bool
     minFitnessValues: list
     meanFitnessValues: list
-
+    bestIndividuals: list
     # generation
     generationIndex: int
     population: list
-    bestIndex: int
 
 
 @dataclass
 class Parameters:
     individuals_to_select: int
     population_size: int
-    MAX_GENERATIONS: int
-    P_CROSSOVER: float
-    P_MUTATION: float
-    MUTATION: float
+    max_generations: int
+    p_crossover: float
+    p_mutation: float
+    mutation: float
