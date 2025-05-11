@@ -169,12 +169,17 @@ class App:
                 y = results.bestIndividuals[i][0][1]
                 self.canvas.create_rectangle(x, y, x + data.n_width, y + data.n_height,
                                              fill='', outline="green", tags=TAG_BEST)
-            # plt.plot(results.minFitnessValues, color='red')
-            # plt.plot(results.meanFitnessValues, color='green')
-            # plt.xlabel("Generation")
-            # plt.ylabel('Min/mean fitness')
-            # plt.title('Dependent min and mean fitness of generation')
-            # plt.show()
+            best_index = results.minFitnessValues.index(min(results.minFitnessValues))
+            best_ind = results.bestIndividuals[best_index]
+            x, y = best_ind[0][0], best_ind[0][1]
+            self.canvas.create_rectangle(x, y, x + data.n_width, y + data.n_height,
+                                         fill='', outline="red", tags=TAG_BEST)
+            plt.plot(results.minFitnessValues, color='red')
+            plt.plot(results.meanFitnessValues, color='green')
+            plt.xlabel("Generation")
+            plt.ylabel('Min/mean fitness')
+            plt.title('Dependent min and mean fitness of generation')
+            plt.show()
         else:
             # for i in range(2): #len(results.population)
             #     x = results.population[i][0][0]
