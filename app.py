@@ -137,15 +137,15 @@ class App:
         if pcros == "":
             pcros = default.pcros
         else:
-            pcros = int(pcros)
+            pcros = float(pcros)
         if pmut == "":
             pmut = default.pmut
         else:
-            pmut = int(pmut)
+            pmut = float(pmut)
         if mut == "":
             mut = default.mut
         else:
-            mut = int(mut)
+            mut = float(mut)
         return Parameters(indtosel, popsize, maxgen, pcros, pmut, mut)
 
     def on_run_click(self):
