@@ -51,6 +51,7 @@ def get_coordinates(individual, width, height):
 
 def fitness_function(individual, data):
     img = data.haystack.crop(get_coordinates(individual, data.n_width, data.n_height))
+    img.convert("RGBA")
     diff = np.abs(np.array(data.needle) - np.array(img))
     fitness = int(np.sum(diff))
     return fitness,

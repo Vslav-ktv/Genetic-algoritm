@@ -26,9 +26,11 @@ def run_search(
 def load_data(haystack_path, needle_path):
     with Image.open(haystack_path) as haystack:
         haystack.load()
+    haystack = haystack.convert("RGBA")
     hw, hh = haystack.size
     with Image.open(needle_path) as needle:
         needle.load()
+    needle = needle.convert("RGBA")
     nw, nh = needle.size
     return Data(haystack, hw, hh, needle, nw, nh)
 
